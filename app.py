@@ -20,10 +20,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的
 # 在扩展类实例化前加载配置
 db = SQLAlchemy(app)
 
-
+'''
 @app.route('/')
 def hello():
     return '<h1>Hello Totoro!</h1><img src="http://helloflask.com/totoro.gif">'
+'''
 
 @app.route('/user/<name>')
 def user_page(name):
@@ -96,7 +97,7 @@ def forge():
 def index():
     user = User.query.first()
     movies = Movie.query.all()
-    return flask.render_template('index.html', user = user, movies = movies)
+    return flask.render_template('index.html', name = user.name, user = user, movies = movies)
 
 
 
