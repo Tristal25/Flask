@@ -1,6 +1,6 @@
 import flask
 from flask import Flask
-from flask import url_for
+from flask import request, url_for, redirect, flash, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 import sys
@@ -17,14 +17,9 @@ else:  # 否则使用四个斜线
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(app.root_path, 'data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
+app.config['SECRET_KEY'] = 'dev'
 # 在扩展类实例化前加载配置
 db = SQLAlchemy(app)
-
-'''
-@app.route('/')
-def hello():
-    return flask.render_template('index.html', name = name, user = user, movies = movies)
-'''
 
 @app.route('/user/<name>')
 def user_page(name):
@@ -58,7 +53,7 @@ class Movie(db.Model):
 def initdb(drop):
     """Initialize the database"""
     if drop:
-        db.dropall()
+        db.drop_all()
     db.create_all()
     click.echo("Initialize database!")
 
@@ -99,14 +94,61 @@ def inject_user():
     movies = Movie.query.all()
     return dict(user = user, movies = movies)
 
-# movie list page
-@app.route("/")
-def index():
-    return flask.render_template('index.html')
-
 # Error page
 @app.errorhandler(404)  # 传入要处理的错误代码
 def page_not_found(e):  # 接受异常对象作为参数
-    return flask.render_template('404.html'), 404  # 返回模板和状态码
+    return render_template('404.html'), 404  # 返回模板和状态码
+
+# Movie list page & Manage input info
+@app.route('/', methods = ['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        year = request.form.get('year')
+        if not title or not year or len(year) != 4 or len(title) > 60:
+            flash('Invalid Input. ')
+            return redirect(url_for('index'))
+        movie = Movie(title = title, year = year)
+        db.session.add(movie)
+        db.session.commit()
+        flash('Item created. ')
+        return redirect(url_for('index'))
+
+    movies = Movie.query.all()
+    return render_template('index.html', movies = movies)
+
+# Editing page
+@app.route("/edit/<int:movie_id>", methods = ["GET", "POST"])
+def edit(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+
+    if request.method == "POST":
+        title = request.form.get('title')
+        year = request.form.get('year')
+        if not title or not year or len(year) != 4 or len(title) > 60:
+            flash("Invalid Input. ")
+            return redirect(url_for("edit", movie_id = movie_id))
+        movie.title = title
+        movie.year = year
+        db.session.commit()
+        flash("Item processed. ")
+        return redirect(url_for('index'))
+
+    return render_template('edit.html', movie = movie)
+
+# Deleting records
+@app.route("/delete/<int:movie_id>", methods = ["GET", "POST"])
+def delete(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    flash("Item deleted. ")
+    return redirect(url_for('index'))
+
+
+
+
+
+
 
 
