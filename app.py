@@ -23,7 +23,7 @@ db = SQLAlchemy(app)
 '''
 @app.route('/')
 def hello():
-    return '<h1>Hello Totoro!</h1><img src="http://helloflask.com/totoro.gif">'
+    return flask.render_template('index.html', name = name, user = user, movies = movies)
 '''
 
 @app.route('/user/<name>')
@@ -92,13 +92,21 @@ def forge():
     db.session.commit()
     click.echo('Done.')
 
-# Read database
-@app.route("/")
-def index():
+# Global variables (context processor)
+@app.context_processor
+def inject_user():
     user = User.query.first()
     movies = Movie.query.all()
-    return flask.render_template('index.html', name = user.name, user = user, movies = movies)
+    return dict(user = user, movies = movies)
 
+# movie list page
+@app.route("/")
+def index():
+    return flask.render_template('index.html')
 
+# Error page
+@app.errorhandler(404)  # 传入要处理的错误代码
+def page_not_found(e):  # 接受异常对象作为参数
+    return flask.render_template('404.html'), 404  # 返回模板和状态码
 
 
