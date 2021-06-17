@@ -2,7 +2,9 @@
 
 {% block content %}
 {% if current_user.is_authenticated %}
+<br>
 Input the movies:
+<br>
 <form method="post">
     Name <input type="text" name="title" autocomplete="off" required>
     Year <input type="text" name="year" autocomplete="off" required>
