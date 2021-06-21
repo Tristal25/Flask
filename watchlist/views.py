@@ -9,8 +9,8 @@ from watchlist import app, db
 def login():
     if request.method == "POST":
 
-        user = User.query.first()
-        if not user:
+        users = User.query.all()
+        if not users:
             flash("Please register first.")
             return redirect(url_for("index"))
 
@@ -21,17 +21,18 @@ def login():
             flash("Invalid input.")
             return redirect(url_for("login"))
 
-        if user.username == username and user.validate_password(password):
-            login_user(user)
-            flash("Login success.")
-            return redirect(url_for("index"))
+        for user in users:
+            if user.username == username and user.validate_password(password):
+                login_user(user)
+                flash("Login success.")
+                return redirect(url_for("index"))
 
         flash("Invalid username or password.")
         return redirect(url_for("login"))
     return render_template("login.html")
 
 # log out
-@app.route("/logout")
+@app.route("/user/logout")
 def logout():
     logout_user()
     flash("Goodbye.")
@@ -41,6 +42,7 @@ def logout():
 @app.route("/register", methods = ["GET", "POST"])
 def register():
     if request.method == "POST":
+        users = User.query.all()
         name = request.form["name"]
         username = request.form["username"]
         password = request.form["password"]
@@ -48,6 +50,11 @@ def register():
         if not username or not password or not name:
             flash("Invalid input.")
             return redirect(url_for("login"))
+
+        for usr in users:
+            if usr.username == username:
+                flash("Username occupied, please choose a different username.")
+                return redirect(url_for("register"))
 
         user = User(name = name, username = username)
         user.set_password(password)
@@ -61,7 +68,7 @@ def register():
 
 
 # settings
-@app.route("/settings", methods = ["GET", "POST"])
+@app.route("/user/settings", methods = ["GET", "POST"])
 @login_required
 def settings():
     if request.method == "POST":
@@ -88,13 +95,15 @@ def index():
         if not title or not year or len(year) != 4 or len(title) > 60:
             flash('Invalid input.')
             return redirect(url_for('index'))
-        movie = Movie(title = title, year = year)
+        movie = Movie(title = title, year = year, username = current_user.username)
         db.session.add(movie)
         db.session.commit()
         flash('Item created.')
         return redirect(url_for('index'))
-
-    movies = Movie.query.all()
+    if current_user.is_authenticated:
+        movies = Movie.query.filter_by(username = current_user.username).all()
+    else:
+        movies = Movie.query.all()
     return render_template('index.html', movies = movies)
 
 # Editing page

@@ -4,7 +4,7 @@ import sys
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-
+from flask_login import login_user, login_required, logout_user, current_user
 
 # Initialize (including Database)
 WIN = sys.platform.startswith('win')
@@ -29,12 +29,13 @@ def load_user(user_id):
     return user
 
 login_manager.login_view = 'login'
+login_manager.login_message ='Please login first!'
 
 @app.context_processor
 def inject_user():
     from watchlist.models import User, Movie
-    user = User.query.first()
+    users = User.query.all()
     movies = Movie.query.all()
-    return dict(user = user, movies = movies)
+    return dict(users = users, movies = movies)
 
 from watchlist import views, errors, commands

@@ -4,7 +4,11 @@
     {% block head %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ user.name }}'s Watchlist</title>
+    {% if current_user.is_authenticated %}
+        <title>{{ current_user.name }}'s Watchlist</title>
+    {% else %}
+        <title>Watchlist - Please Login</title>
+    {% endif %}
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
     {% endblock %}
@@ -15,7 +19,12 @@
 {% endfor %}
     <h2>
         <img alt="Avatar" class="avatar" src="{{ url_for('static', filename='images/avatar.png') }}">
-        {{ user.name }}'s Watchlist
+        {% if current_user.is_authenticated %}
+            {{ current_user.name }}'s Watchlist
+        {% else %}
+            Watchlist - Please Login
+        {% endif %}
+
     </h2>
     <nav>
         <ul>
@@ -31,7 +40,7 @@
     </nav>
     {% block content %}{% endblock %}
     <footer>
-        <small>&copy; 2018 <a href="http://helloflask.com/tutorial">HelloFlask</a></small>
+        <small>&copy; 2018 <a href="http://helloflask.com/tutorial">HelloFlask</a> by Tristal Li</small>
     </footer>
 </body>
 </html>

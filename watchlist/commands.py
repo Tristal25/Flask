@@ -14,12 +14,15 @@ def initdb(drop):
 
 # Create fake data
 @app.cli.command()
-def forge():
+@click.option("--forgemovie", prompt = True, help = "Enter 'True': Forge movie data; 'False': Only forge user account")
+@click.option("--username", prompt = True, help = "The username used to login")
+@click.option("--name", prompt = True, help = "Your name")
+@click.option("--password", prompt = True, hide_input = True, confirmation_prompt = True, help = "The password used to login")
+def forge(username, name, password, forgemovie):
     """Generate fake data."""
     db.create_all()
 
     # 全局的两个变量移动到这个函数内
-    name = 'Tristal Li'
     movies = [
         {'title': 'My Neighbor Totoro', 'year': '1988'},
         {'title': 'Dead Poets Society', 'year': '1989'},
@@ -32,34 +35,17 @@ def forge():
         {'title': 'WALL-E', 'year': '2008'},
         {'title': 'The Pork of Music', 'year': '2012'},
     ]
-
-    user = User(name=name)
+    click.echo('Creating user...')
+    user = User(name=name, username = username)
+    user.set_password("123")
     db.session.add(user)
-    for m in movies:
-        movie = Movie(title=m['title'], year=m['year'])
-        db.session.add(movie)
+    if forgemovie:
+        click.echo('Forging movies...')
+        for m in movies:
+            movie = Movie(title=m['title'], year=m['year'], username = username)
+            db.session.add(movie)
 
     db.session.commit()
     click.echo('Done.')
 
-# Initialize admin account
-@app.cli.command()
-@click.option("--username", prompt = True, help = "The username used to login")
-@click.option("--password", prompt = True, hide_input = True, confirmation_prompt = True, help = "The password used to login")
-def admin(username, password):
-    '''create user'''
-    db.create_all()
 
-    user = User.query.first()
-    if user is not None:
-        click.echo("Updating user....")
-        user.username = username
-        user.set_password(password)
-    else:
-        click.echo("Creating user...")
-        user = User(username = username, name = "Admin")
-        user.set_password(password)
-        db.session.add(user)
-
-    db.session.commit()
-    click.echo("Done.")
